@@ -32,31 +32,32 @@ class Detection(object):
 
     """
 
-    def __init__(self, ltwh, confidence, feature, class_name=None, instance_mask=None, others=None):
+    def __init__(self, ltwhd, confidence, feature, class_name=None, instance_mask=None, others=None):
         # def __init__(self, ltwh, feature):
-        self.ltwh = np.asarray(ltwh, dtype=np.float32)
+        self.ltwh = np.asarray(ltwhd, dtype=np.float32) # includes depth
         self.confidence = float(confidence)
         self.feature = np.asarray(feature, dtype=np.float32)
         self.class_name = class_name
         self.instance_mask = instance_mask
         self.others = others
+        
 
     def get_ltwh(self):
         return self.ltwh.copy()
 
     def to_tlbr(self):
-        """Convert bounding box to format `(min x, min y, max x, max y)`, i.e.,
+        """Convert bounding box to format `(min x, min y, max x, max y, depth)`, i.e.,
         `(top left, bottom right)`.
         """
         ret = self.ltwh.copy()
-        ret[2:] += ret[:2]
+        ret[2:-1] += ret[:2]
         return ret
 
     def to_xyah(self):
         """Convert bounding box to format `(center x, center y, aspect ratio,
-        height)`, where the aspect ratio is `width / height`.
+        height, depth)`, where the aspect ratio is `width / height`.
         """
         ret = self.ltwh.copy()
-        ret[:2] += ret[2:] / 2
+        ret[:2] += ret[2:-1] / 2
         ret[2] /= ret[3]
         return ret

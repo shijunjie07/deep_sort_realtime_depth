@@ -1,3 +1,6 @@
+import sys
+sys.path.append('D:\\depth_sort\\deep_sort_realtime_depth')
+
 import time
 import logging
 from collections.abc import Iterable
@@ -159,8 +162,8 @@ class DeepSort(object):
 
         Parameters
         ----------
-        raw_detections (horizontal bb) : List[ Tuple[ List[float or int], float, str ] ]
-            List of detections, each in tuples of ( [left,top,w,h] , confidence, detection_class)
+        raw_detections (horizontal bb) : List[ Tuple[ List[float or int], float, str] ]
+            List of detections, each in tuples of ( [left,top,w,h,depth] , confidence, detection_class)
         raw_detections (polygon) : List[ List[float], List[int or str], List[float] ]
             List of Polygons, Classes, Confidences. All 3 sublists of the same length. A polygon defined as a ndarray-like [x1,y1,x2,y2,...].
         embeds : Optional[ List[] ] = None
@@ -192,7 +195,7 @@ class DeepSort(object):
 
         if len(raw_detections) > 0: 
             if not self.polygon:
-                assert len(raw_detections[0][0])==4
+                assert len(raw_detections[0][0])==5
                 raw_detections = [d for d in raw_detections if d[0][2] > 0 and d[0][3] > 0]
 
                 if embeds is None:
@@ -214,7 +217,7 @@ class DeepSort(object):
             detections = []
 
         # Run non-maxima suppression.
-        boxes = np.array([d.ltwh for d in detections])
+        boxes = np.array([d.ltwh[:4] for d in detections])
         scores = np.array([d.confidence for d in detections])
         if self.nms_max_overlap < 1.0:
             # nms_tic = time.perf_counter()
@@ -254,8 +257,8 @@ class DeepSort(object):
         for i, (raw_det, embed) in enumerate(zip(raw_dets, embeds)):
             detection_list.append(
                 Detection(  
-                    raw_det[0], 
-                    raw_det[1], 
+                    raw_det[0],
+                    raw_det[1],
                     embed, 
                     class_name=raw_det[2] if len(raw_det)==3 else None,
                     instance_mask = instance_masks[i] if isinstance(instance_masks, Iterable) else instance_masks,
@@ -297,7 +300,7 @@ class DeepSort(object):
         else:
             masks = None
         for i, detection in enumerate(raw_dets):
-            l, t, w, h = [int(x) for x in detection[0]]
+            l, t, w, h, d = [int(x) for x in detection[0]]
             r = l + w
             b = t + h
             crop_l = max(0, l)
@@ -334,3 +337,4 @@ class DeepSort(object):
 
     def delete_all_tracks(self):
         self.tracker.delete_all_tracks()
+
