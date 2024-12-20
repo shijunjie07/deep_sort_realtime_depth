@@ -111,7 +111,7 @@ class KalmanFilter(object):
         innovation_cov = np.diag(np.square(std))
         
         # measurement mean and covariance
-        mean = np.dot(self._motion_mat, mean)
+        mean = np.dot(self._update_mat, mean)
         covariance = np.linalg.multi_dot(
             (self._update_mat, covariance, self._update_mat.T)
         ) + innovation_cov
@@ -120,7 +120,8 @@ class KalmanFilter(object):
     def update(self, mean, covariance, measurement):
         # update step: measurement update
         projected_mean, projected_cov = self.project(mean, covariance)
-        
+        print(mean)
+        print(projected_mean)
         # Lower triangular matrix L, Bool of whether returned a L
         chol_factor, lower = scipy.linalg.cho_factor(
             projected_cov, lower=True, check_finite=False
@@ -131,9 +132,12 @@ class KalmanFilter(object):
             np.dot(covariance, self._update_mat.T).T,
             check_finite=False,
         ).T
-        innovation = measurement - projected_mean
         
-        new_mean = mean + np.dot(kalman_gain.T, innovation)
+        print(measurement)
+        innovation = measurement - projected_mean
+        print(innovation)
+        
+        new_mean = mean + np.dot(innovation, kalman_gain.T)
         new_covariance = covariance - np.linalg.multi_dot(
             (kalman_gain, projected_cov, kalman_gain.T)
         )
