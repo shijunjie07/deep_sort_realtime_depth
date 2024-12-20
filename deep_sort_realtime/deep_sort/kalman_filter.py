@@ -91,7 +91,6 @@ class KalmanFilter(object):
         ]
         motion_cov = np.diag(np.square(np.r_[std_pos, std_vel]))
         
-        # 
         mean = np.dot(self._motion_mat, mean)
         covariance = (
             np.linalg.multi_dot((self._motion_mat, covariance, self._motion_mat.T))
@@ -120,8 +119,7 @@ class KalmanFilter(object):
     def update(self, mean, covariance, measurement):
         # update step: measurement update
         projected_mean, projected_cov = self.project(mean, covariance)
-        print(mean)
-        print(projected_mean)
+
         # Lower triangular matrix L, Bool of whether returned a L
         chol_factor, lower = scipy.linalg.cho_factor(
             projected_cov, lower=True, check_finite=False
@@ -132,10 +130,7 @@ class KalmanFilter(object):
             np.dot(covariance, self._update_mat.T).T,
             check_finite=False,
         ).T
-        
-        print(measurement)
         innovation = measurement - projected_mean
-        print(innovation)
         
         new_mean = mean + np.dot(innovation, kalman_gain.T)
         new_covariance = covariance - np.linalg.multi_dot(
@@ -148,17 +143,18 @@ class KalmanFilter(object):
         # Mahalanobis distance
         
         # project predicted state into measurement space
-        projected_mean, projected_cov = self.project(mean, covariance)
+        mean, covariance = self.project(mean, covariance)
         
         # use only x y
         if only_position:
-            projected_mean, projected_cov = projected_mean[:2], projected_cov[:2]
+            mean, covariance = mean[:2], covariance[:2, :2]
             # measurements is 2D
             measurements = measurements[:, :2]
             
         cholesky_factor = np.linalg.cholesky(covariance)
+
         d = measurements - mean
-        z = scipy.linalg.solve_trangular(
+        z = scipy.linalg.solve_triangular(
             cholesky_factor, d.T, lower=True, check_finite=False, overwrite_b=True
         )
         squared_maha = np.sum(z*z, axis=0)

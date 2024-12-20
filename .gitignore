@@ -100,3 +100,6 @@ tools/
 *.pt
 
 .DS_Store
+
+*.jpg
+test.py
